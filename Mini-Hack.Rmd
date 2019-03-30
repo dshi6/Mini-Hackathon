@@ -1,0 +1,133 @@
+---
+title: "Mini-Hack"
+author: "Dading (Derek) Shi"
+date: "11/19/2018"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(tidyverse)
+morbidity <- read.csv("GA-morbidity.csv")
+poverty <- read.csv("GA-poverty.csv")
+population <- read.csv("GA-Population.csv")
+income<-read.csv("GA-Income.csv")
+obesity <- read.csv("GA-health behaviors.csv")
+
+
+poverty_percent <- poverty$Poverty.....Population.in.poverty.1
+population_total <- population$Total.Population..2011.2015.ACS.
+
+diabete_raw <- morbidity$Discharges.for.Diabetes..deduplicated..2011.2013
+
+diabete_percent <- diabete_raw/population_total*100
+
+income<-income$Income..Median.household.income
+obesity_percent <- obesity$X..of.adults.who.are.obese
+
+#################################################################################################
+df <- data.frame(poverty$County, diabete_percent, poverty_percent, income, obesity_percent)
+df
+#################################################################################################
+ggplot(aes(x = poverty_percent, y = diabete_percent), data = df) +
+    geom_point(alpha = 0.7, aes(color = income, size = 10))+
+  scale_color_gradient(low="blue", high="red")+ 
+  geom_smooth(method="lm", size=2, color="dodgerblue3")
+#################################################################################################
+ggplot(aes(x = poverty_percent, y = obesity_percent), data = df) +
+    geom_point(alpha = 0.7, aes(color = income, size = 10))+
+  scale_color_gradient(low="yellow", high="green")+ 
+  geom_smooth(method="lm", size=2, color="dodgerblue3")
+#################################################################################################
+ggplot(aes(x = obesity_percent, y = diabete_percent), data = df) +
+    geom_point(alpha = 0.7, aes(color = income, size = 10))+
+  scale_color_gradient(low="green", high="red")+ 
+  geom_smooth(method="lm", size=2, color="dodgerblue3")
+#################################################################################################
+model <- lm(diabete_percent ~ poverty_percent + obesity_percent, df)
+
+model
+
+
+```
+
+```{r}
+county_df <- map_data("county") %>%
+    filter(region == "georgia")
+state_df <- map_data("state")%>%
+    filter(region == "georgia")
+#################################################################################################
+ga_base <- ggplot(data = state_df, mapping = aes(x = long, y = lat, group = group)) + 
+  coord_quickmap() + 
+  geom_polygon(color = "black", fill = "gray")
+
+#################################################################################################
+ga_base + theme_void() + 
+  geom_polygon(data = county_df, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA) 
+```
+
+```{r}
+
+
+county_df$subregion <- replace(county_df$subregion, county_df$subregion=="de kalb", "dekalb")
+df$poverty.County <- tolower(df$poverty.County)
+
+mapdat <- left_join(df,county_df, by = c("poverty.County"="subregion"))
+#################################################################################################
+p <-    ggplot(mapdat, aes(long, lat, group = group)) +
+        geom_polygon(aes(fill = income, color="yellow"),
+                     colour = alpha("red", 1/2))  +
+          scale_fill_gradient(low="blue", high="red")+
+        geom_polygon(data = state_df, colour = "black", fill = NA) + 
+        theme_void() +
+  coord_fixed(1.2)
+p
+#################################################################################################
+county_df$subregion <- replace(county_df$subregion, county_df$subregion=="de kalb", "dekalb")
+df$poverty.County <- tolower(df$poverty.County)
+
+mapdat <- left_join(df,county_df, by = c("poverty.County"="subregion"))
+
+p <-    ggplot(mapdat, aes(long, lat, group = group)) +
+        geom_polygon(aes(fill = diabete_percent, color="yellow"),
+                     colour = alpha("red", 1/2))  +
+          scale_fill_gradient(low="blue", high="red")+
+        geom_polygon(data = state_df, colour = "black", fill = NA) + 
+        theme_void() +
+  coord_fixed(1.2)
+p
+#################################################################################################
+county_df$subregion <- replace(county_df$subregion, county_df$subregion=="de kalb", "dekalb")
+df$poverty.County <- tolower(df$poverty.County)
+
+mapdat <- left_join(df,county_df, by = c("poverty.County"="subregion"))
+
+p <-    ggplot(mapdat, aes(long, lat, group = group)) +
+        geom_polygon(aes(fill = poverty_percent, color="yellow"),
+                     colour = alpha("red", 1/2))  +
+          scale_fill_gradient(low="blue", high="red")+
+        geom_polygon(data = state_df, colour = "black", fill = NA) + 
+        theme_void() +
+  coord_fixed(1.2)
+p
+#################################################################################################
+county_df$subregion <- replace(county_df$subregion, county_df$subregion=="de kalb", "dekalb")
+df$poverty.County <- tolower(df$poverty.County)
+
+mapdat <- left_join(df,county_df, by = c("poverty.County"="subregion"))
+
+p <-    ggplot(mapdat, aes(long, lat, group = group)) +
+        geom_polygon(aes(fill = obesity_percent, color="yellow"),
+                     colour = alpha("red", 1/2))  +
+          scale_fill_gradient(low="blue", high="red")+
+        geom_polygon(data = state_df, colour = "black", fill = NA) + 
+        theme_void() +
+  coord_fixed(1.2)
+p
+```
+
+
+
+
